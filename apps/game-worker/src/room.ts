@@ -1,5 +1,5 @@
-import { SimState, SimConfig } from "./sim";
-import { encodeServer, Owner } from "./protocol";
+import { SimState, SimConfig } from "./sim.js";
+import { encodeServer, Owner } from "./protocol.js";
 
 type WS = import("uWebSockets.js").WebSocket<unknown>;
 
