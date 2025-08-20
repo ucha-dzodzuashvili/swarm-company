@@ -8,6 +8,7 @@ RUN npm install --no-audit --no-fund
 COPY next.config.mjs tsconfig.json ./
 COPY app ./app
 COPY src ./src
+COPY components ./components
 RUN npm run build
 EXPOSE 3000
 CMD ["npm","start"]
