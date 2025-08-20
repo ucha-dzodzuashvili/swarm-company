@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  matchmaker:
+    build: ./apps/matchmaker
+    container_name: swarm-matchmaker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - WS_URL=ws://game-worker:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+
+  game-worker:
+    build: ./apps/game-worker
+    container_name: swarm-game-worker
+    environment:
+      - PORT=8081
+    ports:
+      - "8081:8081"
+
+  frontend:
+    build: ./apps/frontend
+    container_name: swarm-frontend
+    environment:
+      - NEXT_PUBLIC_MATCHMAKER_URL=http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - matchmaker
+      - game-worker
