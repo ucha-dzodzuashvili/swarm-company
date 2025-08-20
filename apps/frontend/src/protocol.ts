@@ -1,4 +1,4 @@
-import * as pb from "protobufjs/light";
+import * as pb from "protobufjs";
 
 const PROTO = `
 syntax = "proto3";
