@@ -1,4 +1,5 @@
 FROM node:20-bullseye-slim
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NEXT_PUBLIC_WS_URL=ws://localhost:8081
 ENV NEXT_PUBLIC_MATCHMAKER_URL=http://localhost:8080
