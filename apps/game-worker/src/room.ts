@@ -1,7 +1,7 @@
 import { SimState, SimConfig } from "./sim";
 import { encodeServer, Owner } from "./protocol";
 
-type WS = import("uWebSockets.js").SSLWebSocket<unknown> | import("uWebSockets.js").WebSocket<unknown>;
+type WS = import("uWebSockets.js").WebSocket<unknown>;
 
 export class Room {
   id: number;
@@ -61,7 +61,7 @@ export class Room {
 
   issueOrdersFrom(ws: WS, fromIds: number[], targetId: number, pct: number) {
     const owner = this.players.get(ws);
-    if (!owner || owner === Owner.NEUTRAL) return;
+    if (owner == null || owner === Owner.NEUTRAL) return;
     const created = this.sim.issueOrders(owner, fromIds, targetId, pct);
     for (const f of created) {
       this.newFleets.push({

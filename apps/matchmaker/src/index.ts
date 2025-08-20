@@ -8,7 +8,7 @@ const redis = new Redis(redisUrl);
 
 const app = express();
 
-app.get("/join", async (_req, res) => {
+app.get("/join", async (_req: any, res: any) => {
   const n = await redis.incr("join_counter");
   const roomId = Math.ceil(n / 2);
   res.json({ roomId, wsUrl: WS_URL });
