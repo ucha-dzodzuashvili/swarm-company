@@ -1,5 +1,5 @@
-import { Owner } from "./protocol";
-import { dist, randSeeded } from "./util";
+import { Owner } from "./protocol.js";
+import { dist, randSeeded } from "./util.js";
 
 export interface Planet {
   id: number; x: number; y: number; r: number;

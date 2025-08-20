@@ -1,6 +1,6 @@
 import uWS from "uWebSockets.js";
-import { decodeClient, encodeServer } from "./protocol";
-import { Room } from "./room";
+import { decodeClient, encodeServer } from "./protocol.js";
+import { Room } from "./room.js";
 
 const TICK_HZ = 30;
 const DELTA_HZ = 15;
