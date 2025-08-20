@@ -38,7 +38,7 @@ interface Planet {
 
 interface Fleet {
   id: number; owner: Player; ships: number;
-  x: number; y: number; targetPlanetId: number;
+  x: number; y: number; targetPlanetId: number; fromPlanetId: number;
   speed: number; vx: number; vy: number;
   // Movement shaping
   heading: number;     // initial launch heading (radians)
@@ -47,6 +47,7 @@ interface Fleet {
   // Obstacle avoidance
   avoidPlanetId?: number | null;
   avoidUntil?: number; // seconds remaining to stay in tangent motion around obstacle
+  avoidClockwise?: boolean; // true if circling obstacle clockwise
 }
 
 interface GameConfig {
@@ -255,7 +256,7 @@ export default function SinglePlayerGame() {
         const ang = Math.atan2(t.y - f.y, t.x - f.x);
         f.vx = Math.cos(ang) * f.speed; f.vy = Math.sin(ang) * f.speed;
         f.heading = ang; f.cohere = COHERE_TIME * 0.6; // retarget → tighten again a bit
-        f.targetPlanetId = t.id; f.avoidPlanetId = null; f.avoidUntil = 0;
+        f.targetPlanetId = t.id; f.avoidPlanetId = null; f.avoidUntil = 0; f.avoidClockwise = true;
       }
     });
   }
@@ -276,7 +277,7 @@ export default function SinglePlayerGame() {
     const speed = configRef.current.fleetSpeed;
     const vx = Math.cos(angle) * speed; const vy = Math.sin(angle) * speed;
     const id = (fleetsRef.current.at(-1)?.id ?? 0) + 1;
-    fleetsRef.current.push({ id, owner, ships, x: sx, y: sy, targetPlanetId: to.id, speed, vx, vy, heading: base, cohere: COHERE_TIME, offset, avoidPlanetId: null, avoidUntil: 0 });
+    fleetsRef.current.push({ id, owner, ships, x: sx, y: sy, targetPlanetId: to.id, fromPlanetId: from.id, speed, vx, vy, heading: base, cohere: COHERE_TIME, offset, avoidPlanetId: null, avoidUntil: 0, avoidClockwise: true });
   }
 
   function resolveArrival(f: Fleet, p: Planet) {
@@ -312,16 +313,17 @@ export default function SinglePlayerGame() {
         f.avoidUntil! -= dt;
         if (ap) {
           const rx = f.x - ap.x, ry = f.y - ap.y; const rad = Math.max(1, Math.hypot(rx, ry));
-          const tx =  ry / rad, ty = -rx / rad; // clockwise tangent around obstacle
+          const dir = f.avoidClockwise ? 1 : -1;
+          const tx =  dir * ry / rad, ty = -dir * rx / rad; // tangent around obstacle
           f.vx = tx * f.speed; f.vy = ty * f.speed;
           f.x += f.vx * dt; f.y += f.vy * dt;
           if (Math.hypot(f.x - ap.x, f.y - ap.y) > ap.r + AVOID_CLEAR || (f.avoidUntil ?? 0) <= 0) {
-            f.avoidPlanetId = null; f.avoidUntil = 0;
+            f.avoidPlanetId = null; f.avoidUntil = 0; f.avoidClockwise = true;
           }
           continue;
         } else {
           // Obstacle vanished (shouldn't happen) → clear
-          f.avoidPlanetId = null; f.avoidUntil = 0;
+          f.avoidPlanetId = null; f.avoidUntil = 0; f.avoidClockwise = true;
         }
       }
 
@@ -346,11 +348,24 @@ export default function SinglePlayerGame() {
 
       // Obstacle detection (other planets) → enter avoidance
       for (const p of planetsRef.current) {
-        if (p.id === target.id) continue; // target handled separately
+        if (p.id === target.id || p.id === f.fromPlanetId) continue; // ignore origin and target
         const d = dist(f.x, f.y, p.x, p.y);
         if (d <= p.r + AVOID_BUFFER) {
           f.avoidPlanetId = p.id;
-          f.avoidUntil = AVOID_TIME_MIN + Math.random() * (AVOID_TIME_MAX - AVOID_TIME_MIN);
+          const thetaF = Math.atan2(f.y - p.y, f.x - p.x);
+          const thetaT = Math.atan2(target.y - p.y, target.x - p.x);
+          const cw = (thetaF - thetaT + Math.PI * 2) % (Math.PI * 2);
+          const ccw = (thetaT - thetaF + Math.PI * 2) % (Math.PI * 2);
+          const orbitR = p.r + AVOID_CLEAR;
+          if (cw <= ccw) {
+            f.avoidClockwise = true;
+            const arc = orbitR * cw;
+            f.avoidUntil = Math.min(AVOID_TIME_MAX, Math.max(AVOID_TIME_MIN, arc / f.speed));
+          } else {
+            f.avoidClockwise = false;
+            const arc = orbitR * ccw;
+            f.avoidUntil = Math.min(AVOID_TIME_MAX, Math.max(AVOID_TIME_MIN, arc / f.speed));
+          }
           break;
         }
       }
