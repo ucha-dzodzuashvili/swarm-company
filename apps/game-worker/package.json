@@ -1,0 +1,19 @@
+{
+  "name": "swarm-game-worker",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "protobufjs": "^7.2.6",
+    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.47.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
