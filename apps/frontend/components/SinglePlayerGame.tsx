@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useRef, useState } from "react";
-import Hud from "./Hud";
 
 /**
  * Swarm.Company — Galcon-like Prototype (Obstacle Avoid + Cohesion + Chunked Swarms)
@@ -63,8 +62,8 @@ interface GameRefs {
 }
 
 const COLORS = {
-  bg: "#02111b", grid: "#0a1a2a", neutral: "#9aa5b3",
-  human: "#2ac7d9", ai: "#e23e57", text: "#f8fafc", selection: "#ffd700",
+  bg: "#0b0e1a", grid: "#111523", neutral: "#8b8fa5",
+  human: "#35e0ff", ai: "#ff6a3d", text: "#e7e9ee", selection: "#7ef7c7",
 };
 const OWNER_COLOR = (p: Player) => (p === "HUMAN" ? COLORS.human : p === "AI" ? COLORS.ai : COLORS.neutral);
 const FIXED_DT = 1 / 60; // seconds
@@ -107,7 +106,6 @@ export default function SinglePlayerGame() {
   const [status, setStatus] = useState<"playing" | "won" | "lost">("playing");
   const [level, setLevel] = useState<number>(1);
   const [testLog, setTestLog] = useState<string[]>([]);
-  const [totals, setTotals] = useState({ human: 0, ai: 0, neutral: 0 });
 
   // Game state
   const planetsRef = useRef<Planet[]>([]);
@@ -428,8 +426,13 @@ export default function SinglePlayerGame() {
       selectionRef.current.planets.forEach((pid) => { const p = planetsRef.current.find(q => q.id === pid); if (!p) return; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 3, 0, Math.PI * 2); ctx.stroke(); });
     }
 
-    // Update totals for HUD
-    setTotals(countTotals());
+    // HUD totals + Send%
+    const totals = countTotals();
+    ctx.fillStyle = COLORS.text; ctx.font = `${14 * (window.devicePixelRatio || 1)}px ui-sans-serif,system-ui`;
+    ctx.textAlign = "left"; ctx.fillText(
+      `You: ${Math.round(totals.human)}   AI: ${Math.round(totals.ai)}   Neutral: ${Math.round(totals.neutral)}   Send%: ${Math.round(sendPercent * 100)}%`,
+      16 * (window.devicePixelRatio || 1), 24 * (window.devicePixelRatio || 1)
+    );
   }
 
   function drawPlanet(ctx: CanvasRenderingContext2D, p: Planet, sel: boolean) {
@@ -513,13 +516,25 @@ export default function SinglePlayerGame() {
   // UI
   // ============================
   return (
-    <div className="w-full min-h-screen bg-[#02111b] text-white flex flex-col items-center py-6">
+    <div className="w-full min-h-screen bg-[#0b0e1a] text-white flex flex-col items-center py-6">
       <div className="w-full max-w-5xl flex items-center justify-between px-4 mb-3">
         <div className="flex items-center gap-3">
           <div className="text-xl font-bold tracking-wide">Swarm.Company — Prototype</div>
           <div className="text-sm opacity-70">Level {level}</div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <label className="text-sm opacity-80">Send %</label>
+          <input
+            type="range"
+            min={5}
+            max={100}
+            step={5}
+            value={Math.round(sendPercent * 100)}
+            className="w-48"
+            onChange={(e) => setSendPercent(Math.max(0.05, parseInt(e.target.value) / 100))}
+            title="Send percentage (wheel adjusts ±5%; 1–9 keys; 0 = 100%)"
+          />
+          <div className="text-sm tabular-nums">{Math.round(sendPercent * 100)}%</div>
           <button className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40" onClick={() => restart(level)} title="Restart (R)">Restart</button>
           <button className="px-3 py-1.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-400/40" onClick={() => setLevel((l) => l + 1)} title="Next level (harder)">Next Level</button>
           <button className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40" onClick={runTests} title="Run built-in tests">Run Tests</button>
@@ -528,7 +543,6 @@ export default function SinglePlayerGame() {
 
       <div className="relative">
         <canvas ref={canvasRef} className="rounded-2xl shadow-[0_0_0_1px_rgba(255,255,255,.06)]" />
-        <Hud totals={totals} sendPercent={sendPercent} setSendPercent={setSendPercent} />
         {status !== "playing" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="backdrop-blur-sm bg-black/40 px-6 py-4 rounded-2xl border border-white/10 text-center">
