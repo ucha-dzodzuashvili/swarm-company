@@ -111,6 +111,7 @@ export default function SinglePlayerGame() {
   const planetsRef = useRef<Planet[]>([]);
   const fleetsRef = useRef<Fleet[]>([]);
   const selectionRef = useRef<{ planets: Set<number>; fleets: Set<number> }>({ planets: new Set(), fleets: new Set() });
+  const shipImgRef = useRef<HTMLImageElement | null>(null);
 
   const configRef = useRef<GameConfig>({
     seed: Math.floor(Math.random() * 1e9), planetCount: 22, mapPadding: 64,
@@ -148,6 +149,12 @@ export default function SinglePlayerGame() {
       stopLoop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = "/ship.png";
+    shipImgRef.current = img;
   }, []);
 
   useEffect(() => { restart(level); /* eslint-disable-line react-hooks/exhaustive-deps */ }, [level]);
@@ -447,11 +454,26 @@ export default function SinglePlayerGame() {
     const color = OWNER_COLOR(f.owner); const ang = Math.atan2(f.vy, f.vx);
     let size = 6; for (const tier of FLEET_SIZE_TABLE) { if (f.ships <= tier.max) { size = tier.px; break; } }
     if (sel) size += 3;
-    const x = f.x, y = f.y; ctx.fillStyle = color; ctx.beginPath();
-    ctx.moveTo(x + Math.cos(ang) * size, y + Math.sin(ang) * size);
-    ctx.lineTo(x + Math.cos(ang + 2.5) * size, y + Math.sin(ang + 2.5) * size);
-    ctx.lineTo(x + Math.cos(ang - 2.5) * size, y + Math.sin(ang - 2.5) * size);
-    ctx.closePath(); ctx.fill();
+    const img = shipImgRef.current;
+    if (img && img.complete) {
+      const scale = (size * 2) / img.width;
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = color;
+      ctx.fillRect(-img.width / 2, -img.height / 2, img.width, img.height);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.restore();
+    } else {
+      const x = f.x, y = f.y; ctx.fillStyle = color; ctx.beginPath();
+      ctx.moveTo(x + Math.cos(ang) * size, y + Math.sin(ang) * size);
+      ctx.lineTo(x + Math.cos(ang + 2.5) * size, y + Math.sin(ang + 2.5) * size);
+      ctx.lineTo(x + Math.cos(ang - 2.5) * size, y + Math.sin(ang - 2.5) * size);
+      ctx.closePath(); ctx.fill();
+    }
   }
 
   // ============================

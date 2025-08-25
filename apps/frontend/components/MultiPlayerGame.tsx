@@ -32,14 +32,42 @@ export default function MultiPlayerGame() {
 
     function setupTicker() {
       const gPlanets = new PIXI.Graphics();
-      const gFleets = new PIXI.Graphics();
+      const labelContainer = new PIXI.Container();
+      const fleetContainer = new PIXI.Container();
+      const planetLabels = new Map<number, PIXI.Text>();
+      const fleetSprites = new Map<number, PIXI.Sprite>();
       app.stage.addChild(gPlanets);
-      app.stage.addChild(gFleets);
+      app.stage.addChild(labelContainer);
+      app.stage.addChild(fleetContainer);
 
       app.ticker.add(() => {
-        gFleets.clear();
+        fleetSprites.forEach((sprite, id) => {
+          if (!fleetsRef.current.has(id)) {
+            fleetContainer.removeChild(sprite);
+            sprite.destroy();
+            fleetSprites.delete(id);
+          }
+        });
         fleetsRef.current.forEach(f => {
-          gFleets.fill({ color: ownerColor(f.owner) }).circle(f.x, f.y, 3);
+          let sprite = fleetSprites.get(f.id);
+          if (!sprite) {
+            sprite = PIXI.Sprite.from('/ship.png');
+            sprite.anchor.set(0.5);
+            sprite.scale.set(0.06);
+            sprite.tint = ownerColor(f.owner);
+            fleetContainer.addChild(sprite);
+            fleetSprites.set(f.id, sprite);
+          }
+          sprite.position.set(f.x, f.y);
+          sprite.tint = ownerColor(f.owner);
+        });
+
+        planetLabels.forEach((label, id) => {
+          if (!planetsRef.current.has(id)) {
+            labelContainer.removeChild(label);
+            label.destroy();
+            planetLabels.delete(id);
+          }
         });
 
         gPlanets.clear();
@@ -48,9 +76,17 @@ export default function MultiPlayerGame() {
           const color = ownerColor(p.owner);
           gPlanets.fill({ color }).circle(p.x, p.y, p.r);
           gPlanets.stroke({ width: sel ? 4 : 2, color: sel ? 0x7ef7c7 : 0x22273a }).circle(p.x, p.y, p.r + 2);
-          const label = new PIXI.Text({ text: String(p.ships), style: { fill: 0xe7e9ee, fontSize: Math.max(12, Math.floor(p.r)) }});
-          label.anchor.set(0.5); label.position.set(p.x, p.y);
-          gPlanets.addChild(label);
+          let label = planetLabels.get(p.id);
+          if (!label) {
+            label = new PIXI.Text({ text: String(p.ships), style: { fill: 0xe7e9ee, fontSize: Math.max(12, Math.floor(p.r)) }});
+            label.anchor.set(0.5);
+            labelContainer.addChild(label);
+            planetLabels.set(p.id, label);
+          } else {
+            (label.style as any).fontSize = Math.max(12, Math.floor(p.r));
+          }
+          label.text = String(p.ships);
+          label.position.set(p.x, p.y);
         });
       });
     }
