@@ -462,10 +462,10 @@ export default function SinglePlayerGame() {
       ctx.translate(f.x, f.y);
       ctx.rotate(ang + Math.PI / 2);
       ctx.scale(scale, scale);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-      ctx.globalCompositeOperation = "source-atop";
       ctx.fillStyle = color;
       ctx.fillRect(-img.width / 2, -img.height / 2, img.width, img.height);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
       ctx.globalCompositeOperation = "source-over";
       ctx.restore();
     } else {
