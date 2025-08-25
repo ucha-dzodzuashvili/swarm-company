@@ -2,4 +2,7 @@
 .next
 .DS_Store
 coverage
-apps/frontend/public/ship.png
+
+**/editorconfig
+.idea
+.vscode
