@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
 import { Types, Owner } from "../src/protocol";
+import shipImg from "../public/ship.png";
 
 const MATCHMAKER_URL = process.env.NEXT_PUBLIC_MATCHMAKER_URL || "http://localhost:8080";
 
@@ -51,7 +52,7 @@ export default function MultiPlayerGame() {
         fleetsRef.current.forEach(f => {
           let sprite = fleetSprites.get(f.id);
           if (!sprite) {
-            sprite = PIXI.Sprite.from('/ship.png');
+            sprite = PIXI.Sprite.from(shipImg.src);
             sprite.anchor.set(0.5);
             sprite.scale.set(0.06);
             sprite.tint = ownerColor(f.owner);

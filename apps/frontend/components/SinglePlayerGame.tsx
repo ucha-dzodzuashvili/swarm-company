@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from "react";
+import shipImg from "../public/ship.png";
 
 /**
  * Swarm.Company — Galcon-like Prototype (Obstacle Avoid + Cohesion + Chunked Swarms)
@@ -153,7 +154,7 @@ export default function SinglePlayerGame() {
 
   useEffect(() => {
     const img = new Image();
-    img.src = "/ship.png";
+    img.src = shipImg.src;
     shipImgRef.current = img;
   }, []);
 
